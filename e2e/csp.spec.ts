@@ -24,7 +24,7 @@ function policyOf(res: APIResponse): Map<string, string[]> {
 
 /** The HTML's inline scripts that run, attributes and text as sent (JSON-LD is data: CSP leaves it alone). */
 function inlineScripts(html: string) {
-  return [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)]
+  return [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi)]
     .map(([, attrs, text]) => ({ attrs, text, type: /\btype="([^"]*)"/.exec(attrs)?.[1] }))
     .filter(s => !/\bsrc=/.test(s.attrs) && (!s.type || s.type === 'text/javascript' || s.type === 'module'));
 }

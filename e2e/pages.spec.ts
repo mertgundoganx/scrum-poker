@@ -14,8 +14,13 @@ function inLanguage(lang: string, path: string): string {
 
 /** The text of the first <h1> in server-rendered HTML. */
 function firstHeading(html: string): string {
-  const inner = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '';
-  return inner.replace(/<[^>]+>/g, '').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
+  let text = html.match(/<h1[^>]*>([\s\S]*?)<\/h1\s*>/i)?.[1] ?? '';
+  // Strip tags until none are left: one pass could join the pieces of a split tag into a new one.
+  for (let before = ''; before !== text;) {
+    before = text;
+    text = text.replace(/<[^>]*>/g, '');
+  }
+  return text.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
 }
 
 /**

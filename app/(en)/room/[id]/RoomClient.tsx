@@ -541,9 +541,9 @@ function loadStoryImport(): Promise<typeof import('@/lib/storyImport')> {
   return import('@/lib/storyImport').then(m => (storyImport = m));
 }
 
-/** A Markdown table cell: pipes escaped, line breaks flattened. */
+/** A Markdown table cell: backslashes and pipes escaped (backslashes first, so "\|" can't end the cell), line breaks flattened. */
 function mdCell(value: string): string {
-  return value.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
+  return value.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
 }
 
 /**
