@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="color-scheme" content="light dark"/>
+<!-- Same colours as app/manifest.ts and the viewport in app/RootDocument.tsx -->
+<meta name="theme-color" content="#FBFAF7" media="(prefers-color-scheme: light)"/>
+<meta name="theme-color" content="#1A1C21" media="(prefers-color-scheme: dark)"/>
+<title>Offline — Scrum Poker</title>
+<script>
+  // Before paint: the saved theme (as app/ThemeProvider.tsx stores it) and the
+  // language the app would show, so the page doesn't flash in the wrong one.
+  (function () {
+    var root = document.documentElement;
+    try {
+      var theme = localStorage.getItem('scrumPoker_theme');
+      if (theme === 'dark' || theme === 'light') {
+        root.setAttribute('data-theme', theme);
+        root.style.colorScheme = theme;
+        var color = theme === 'dark' ? '#1A1C21' : '#FBFAF7';
+        document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.setAttribute('content', color); });
+      }
+    } catch (e) { /* storage unavailable: follow the system */ }
+  })();
+</script>
+<style>
+  /* Bright paper, as app/globals.css: light, then dark (system or saved). */
+  :root{--bg:#FBFAF7;--card:#fff;--border:#E8E5DF;--heading:#23262D;--text:#5A5750;--meta:#706C64;--btn:#BF3830;--btn-hover:#A02F28;--ring:#D6453D;
+    --shadow:0 1px 2px rgba(35,38,45,.05),0 10px 28px rgba(35,38,45,.08);--m-back:#BF3830;--m-edge:#23262D}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A1C21;--card:#23262D;--border:#30333A;--heading:#FBFAF7;--text:#D5D1C9;--meta:#A9A49B;--btn:#CC3D35;--btn-hover:#BF3830;--ring:#F37A70;
+    --shadow:inset 0 1px 0 rgba(255,255,255,.04),0 12px 28px rgba(0,0,0,.32);--m-back:#CC3D35;--m-edge:#1A1C21}}
+  :root[data-theme="dark"]{--bg:#1A1C21;--card:#23262D;--border:#30333A;--heading:#FBFAF7;--text:#D5D1C9;--meta:#A9A49B;--btn:#CC3D35;--btn-hover:#BF3830;--ring:#F37A70;
+    --shadow:inset 0 1px 0 rgba(255,255,255,.04),0 12px 28px rgba(0,0,0,.32);--m-back:#CC3D35;--m-edge:#1A1C21}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);padding:1.5rem;-webkit-font-smoothing:antialiased}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:.75rem;box-shadow:var(--shadow);padding:2.5rem 2rem;text-align:center;max-width:22rem}
+  .mark{display:block;margin:0 auto 1.5rem}
+  .mark .back{fill:var(--m-back)} .mark .frame{fill:none;stroke:#fff;stroke-opacity:.85} .mark .front{fill:#fff;stroke:var(--m-edge)} .mark .pip{fill:#D6453D}
+  h1{font-size:1.375rem;font-weight:700;letter-spacing:-.02em;color:var(--heading);margin-bottom:.5rem}
+  p{font-size:.9375rem;line-height:1.6;margin-bottom:1.75rem}
+  .status{display:inline-flex;align-items:center;gap:.5rem;font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--meta);margin-bottom:.75rem}
+  :lang(zh) .status{letter-spacing:0}
+  .dot{width:.4375rem;height:.4375rem;border-radius:50%;background:var(--meta);animation:pulse 2s infinite}
+  button{background:var(--btn);color:#fff;border:0;min-height:2.75rem;padding:.625rem 1.5rem;border-radius:.5rem;font:inherit;font-weight:600;font-size:.9375rem;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 1px 2px rgba(35,38,45,.14);transition:background-color .15s,scale .12s}
+  button:hover{background:var(--btn-hover)}
+  button:active{scale:.98}
+  button:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  @media (prefers-reduced-motion:reduce){.dot{animation:none}button:active{scale:none}}
+</style>
+</head>
+<body>
+<main class="card">
+  <!-- The mark, as app/Logo.tsx -->
+  <svg class="mark" width="56" height="56" viewBox="0 0 28 28" aria-hidden="true">
+    <g transform="rotate(-15 14.5 27.5)">
+      <rect class="back" x="7" y="3.5" width="15" height="21" rx="2.6"/>
+      <rect class="frame" x="8.7" y="5.2" width="11.6" height="17.6" rx="1.4" stroke-width=".55"/>
+    </g>
+    <g transform="rotate(7 14.5 27.5)">
+      <rect class="front" x="8" y="3" width="15" height="21" rx="2.6" stroke-width="1.2"/>
+      <path class="pip" d="M15.5 7.9Q16.4 12.27 19.6 13.5Q16.4 14.73 15.5 19.1Q14.6 14.73 11.4 13.5Q14.6 12.27 15.5 7.9Z"/>
+    </g>
+  </svg>
+  <div class="status" role="status"><span class="dot"></span><span data-text="status">No internet connection</span></div>
+  <h1 data-text="heading">You're offline</h1>
+  <p data-text="body">Scrum Poker needs an active connection for real-time collaboration. This page reloads automatically once you're back online.</p>
+  <button type="button" data-text="retry">Try again</button>
+</main>
+<script>
+  (function () {
+    // The saved language (as app/LanguageProvider.tsx stores it), else the
+    // browser's first language we have, else English as written above.
+    var TEXT = {
+      tr: { title: 'Çevrimdışı — Scrum Poker', status: 'İnternet bağlantısı yok', heading: 'Çevrimdışısın', body: 'Scrum Poker gerçek zamanlı iş birliği için etkin bir bağlantıya ihtiyaç duyar. Tekrar çevrimiçi olduğunda bu sayfa kendiliğinden yenilenir.', retry: 'Tekrar dene' },
+      de: { title: 'Offline — Scrum Poker', status: 'Keine Internetverbindung', heading: 'Du bist offline', body: 'Scrum Poker braucht für die Zusammenarbeit in Echtzeit eine aktive Verbindung. Diese Seite lädt automatisch neu, sobald du wieder online bist.', retry: 'Erneut versuchen' },
+      fr: { title: 'Hors ligne — Scrum Poker', status: 'Pas de connexion Internet', heading: 'Vous êtes hors ligne', body: 'Scrum Poker a besoin d’une connexion active pour la collaboration en temps réel. Cette page se recharge automatiquement dès que vous êtes de nouveau en ligne.', retry: 'Réessayer' },
+      it: { title: 'Offline — Scrum Poker', status: 'Nessuna connessione a Internet', heading: 'Sei offline', body: 'Scrum Poker ha bisogno di una connessione attiva per la collaborazione in tempo reale. Questa pagina si ricarica automaticamente appena torni online.', retry: 'Riprova' },
+      ar: { title: 'غير متصل — Scrum Poker', status: 'لا يوجد اتصال بالإنترنت', heading: 'أنت غير متصل', body: 'يحتاج Scrum Poker إلى اتصال نشط للتعاون في الوقت الفعلي. ستُعاد تحميل هذه الصفحة تلقائيًا عند عودة الاتصال.', retry: 'إعادة المحاولة' },
+      zh: { title: '离线 — Scrum Poker', status: '没有网络连接', heading: '你已离线', body: 'Scrum Poker 需要网络连接才能实时协作。恢复联网后，此页面会自动重新加载。', retry: '重试' },
+    };
+    var LOCALES = ['en', 'tr', 'de', 'fr', 'it', 'ar', 'zh'];
+
+    function pick() {
+      try {
+        var saved = localStorage.getItem('scrumPoker_lang');
+        if (LOCALES.indexOf(saved) !== -1) return saved;
+      } catch (e) { /* storage unavailable */ }
+      var wanted = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
+      for (var i = 0; i < wanted.length; i++) {
+        var primary = String(wanted[i]).split('-')[0].toLowerCase();
+        if (LOCALES.indexOf(primary) !== -1) return primary;
+      }
+      return 'en';
+    }
+
+    var lang = pick();
+    var text = TEXT[lang];
+    if (text) {
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.title = text.title;
+      document.querySelectorAll('[data-text]').forEach(function (el) { el.textContent = text[el.getAttribute('data-text')]; });
+    }
+
+    document.querySelector('button').addEventListener('click', function () { window.location.reload(); });
+    window.addEventListener('online', function () { window.location.reload(); });
+  })();
+</script>
+</body>
+</html>

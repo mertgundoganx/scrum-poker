@@ -1,0 +1,122 @@
+/*
+ * Page transitions, with the browser's View Transitions API (imported by PageTransition).
+ *
+ * - Client-side navigations: PageTransition wraps each root layout's pages in React's
+ *   <ViewTransition>, keyed on the address: the old page leaves (class page-out), the
+ *   new one arrives (page-in). html[data-page-nav] says which way the visitor went.
+ * - Full page loads (switching language, entering a room, back to a page left that way):
+ *   a cross-document view transition, the new page rising in over the old one.
+ * - The site header stays still in both, its text crossfading if it changed.
+ *
+ * Browsers without view transitions (or without a part of them used here) swap pages as
+ * before: every rule below is either ignored or never matches.
+ */
+
+:root {
+  /* Which way "forward" is: towards the end of a line. */
+  --page-dir: 1;
+  /* Where the new page comes from and the old one goes (a `translate`): across (the
+     header's links, the footer's), the new page rises and the old one lifts away. */
+  --page-in: 0 10px;
+  --page-out: 0 -6px;
+  --page-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --page-ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+:root[dir='rtl'] {
+  --page-dir: -1;
+}
+/* Into a page under this one (a blog post from the list): from the end of the line… */
+:root[data-page-nav='deeper'] {
+  --page-in: calc(14px * var(--page-dir)) 0;
+  --page-out: calc(-8px * var(--page-dir)) 0;
+}
+/* …and back up (the breadcrumb, the logo): from its start. */
+:root[data-page-nav='back'] {
+  --page-in: calc(-14px * var(--page-dir)) 0;
+  --page-out: calc(8px * var(--page-dir)) 0;
+}
+
+@keyframes page-in {
+  from { translate: var(--page-in); }
+}
+@keyframes page-out {
+  to { opacity: 0; translate: var(--page-out); }
+}
+@keyframes page-fade-in {
+  from { opacity: 0; }
+}
+@keyframes page-fade-out {
+  to { opacity: 0; }
+}
+
+/* Clicks during the quarter second reach the page underneath. */
+::view-transition {
+  pointer-events: none;
+}
+/* React shrinks this overlay to 0×0 for its transitions. Pinned left and right, a box that
+   size sits at the end of the line, which in Arabic is the right edge: the whole picture
+   would play one screen width to the right, off screen, and the page would go blank. */
+:root[dir='rtl']::view-transition {
+  right: auto;
+}
+
+/* Client-side navigations: the old page leaves quickly; the new one is already moving
+   when it fades in, almost as the old one is gone (the two would show through each
+   other otherwise). A quarter second in all. */
+::view-transition-old(.page-out) {
+  animation: page-out 110ms var(--page-ease-in) both;
+}
+::view-transition-new(.page-in) {
+  animation:
+    page-in 260ms var(--page-ease-out) both,
+    page-fade-in 170ms var(--page-ease-out) 90ms both;
+}
+
+/* The site header (SiteHeader, the first thing in <body> on every page but the room) is
+   named only while a transition runs: it stays put, above the moving page. Its name and
+   class override the ones React gives the page it is part of. */
+:root:active-view-transition body > header {
+  view-transition-name: site-header !important;
+  view-transition-class: none !important;
+}
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 1;
+}
+::view-transition-old(site-header) {
+  animation: page-fade-out 150ms ease both;
+}
+::view-transition-new(site-header) {
+  animation: page-fade-in 150ms ease both;
+}
+
+/* Full page loads between our pages. The old page holds still underneath (no fade: in a
+   crossfade both pages are see-through halfway, and what shows through is not the page's
+   background); the new one rises in over it. */
+@view-transition {
+  navigation: auto;
+  types: page-load;
+}
+:root:active-view-transition-type(page-load)::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+:root:active-view-transition-type(page-load)::view-transition-new(root) {
+  animation:
+    page-in 260ms var(--page-ease-out) both,
+    page-fade-in 200ms var(--page-ease-out) both;
+  mix-blend-mode: normal;
+}
+
+/* Reduced motion: nothing moves, the pages only fade, briefly. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(.page-out) {
+    animation: page-fade-out 80ms linear both;
+  }
+  ::view-transition-new(.page-in) {
+    animation: page-fade-in 120ms linear both;
+  }
+  :root:active-view-transition-type(page-load)::view-transition-new(root) {
+    animation: page-fade-in 120ms linear both;
+  }
+}

@@ -1,0 +1,457 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: var(--font-text);
+  --font-mono: var(--font-geist-mono);
+  /* Depth, as utilities (shadow-card, shadow-raised, shadow-overlay). Each switches with
+     the theme (the values are in BASE below), so no dark: variant is needed. */
+  --shadow-card: var(--depth-card);
+  --shadow-raised: var(--depth-raised);
+  --shadow-overlay: var(--depth-overlay);
+}
+
+/* ═══════════════════════════════════════════
+   PALETTE: bright paper, with a card-suit red
+   - accent-*  the red: primary buttons, the selected card, the current story,
+               small ♦ marks. Bright, but used with restraint.
+   - slate-*   remapped neutrals (the name stays so the utilities do):
+               50–600 warm paper greys for light surfaces, borders and secondary text,
+               700–950 a soft anthracite for the dark theme (never pure black).
+               Ink (slate-900) is for text, not for large fills.
+   - Tailwind's own violet, indigo and the like are not part of the look: don't use them.
+   Contrast: white text on accent-600 is 5.5:1 and on accent-550 4.9:1;
+   accent-700 text on white 7.2:1; accent-400 text on slate-950 6.4:1, on slate-800 4.7:1;
+   slate-500 text on white 5.2:1, on slate-100 4.7:1; slate-400 on slate-800 5.1:1.
+═══════════════════════════════════════════ */
+@theme {
+  --color-accent-50:  #FEF4F2;
+  --color-accent-100: #FDE5E1;
+  --color-accent-200: #FAC9C2;
+  --color-accent-300: #F4A196;
+  --color-accent-400: #F37A70;
+  --color-accent-500: #D6453D;
+  --color-accent-550: #CC3D35;
+  --color-accent-600: #BF3830;
+  --color-accent-700: #A02F28;
+  --color-accent-800: #80271F;
+  --color-accent-900: #66221C;
+  --color-accent-950: #3A100C;
+
+  /* Paper greys (light) to anthracite (dark) */
+  --color-slate-50:  #FBFAF7;
+  --color-slate-100: #F4F2EE;
+  --color-slate-200: #E8E5DF;
+  --color-slate-300: #D5D1C9;
+  --color-slate-400: #A9A49B;
+  --color-slate-500: #706C64;
+  --color-slate-600: #5A5750;
+  --color-slate-700: #44464D;
+  --color-slate-800: #30333A;
+  --color-slate-900: #23262D;
+  --color-slate-950: #1A1C21;
+}
+
+/* ═══════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════ */
+:root {
+  color-scheme: light;
+  --font-text: var(--font-geist-sans), system-ui, sans-serif;
+  /* Soft, layered, ink-tinted shadows: resting cards, a lifted card, menus and dialogs. */
+  --depth-card: 0 1px 2px rgba(35, 38, 45, 0.05), 0 4px 12px rgba(35, 38, 45, 0.05);
+  --depth-raised: 0 2px 4px rgba(35, 38, 45, 0.05), 0 10px 24px rgba(35, 38, 45, 0.09);
+  --depth-overlay: 0 4px 10px rgba(35, 38, 45, 0.06), 0 18px 44px rgba(35, 38, 45, 0.14);
+}
+/* Dark: shadows go deeper and a faint light edge on top does the separating. */
+.dark {
+  color-scheme: dark;
+  --depth-card: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 1px 2px rgba(0, 0, 0, 0.28), 0 4px 12px rgba(0, 0, 0, 0.18);
+  --depth-raised: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 4px rgba(0, 0, 0, 0.3), 0 12px 28px rgba(0, 0, 0, 0.32);
+  --depth-overlay: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 10px rgba(0, 0, 0, 0.35), 0 20px 48px rgba(0, 0, 0, 0.5);
+}
+/* Geist has no Arabic letters: Arabic gets Noto Sans Arabic (RootDocument sets
+   --font-sans-ar), ahead of Geist's local fallback, whose Arabic comes out small. */
+html:lang(ar) { --font-text: var(--font-sans-ar, var(--font-geist-sans)), system-ui, sans-serif; }
+
+/* Ink on bright paper; in dark, light text on anthracite */
+body {
+  background-color: var(--color-slate-50);
+  color: var(--color-slate-900);
+  font-family: var(--font-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.dark body {
+  background-color: var(--color-slate-950);
+  color: var(--color-slate-100);
+}
+
+/* Headings stay in Geist, set tight: no second face to download, and Geist already
+   covers every Latin language the site speaks. (zh resets the tracking, below.) */
+h1, h2, h3,
+.font-display,
+.gradient-text,
+.gradient-text-animated {
+  font-family: var(--font-text);
+  letter-spacing: -0.02em;
+}
+
+::selection { background: var(--color-accent-100); color: var(--color-slate-900); }
+.dark ::selection { background: rgba(214, 69, 61, 0.42); color: #FFFFFF; }
+
+/* No border-radius here: this rule is unlayered, so it would override Tailwind's
+   rounded-* utilities on every focused control. Outlines follow the element's radius. */
+:focus-visible {
+  outline: 2px solid var(--color-accent-500);
+  outline-offset: 2px;
+}
+.dark :focus-visible { outline-color: var(--color-accent-400); }
+/* The ring's color before focus too, so a color transition (transition-colors) has nothing
+   to fade: the ring appears at once instead of coming in from the text color. */
+@layer base {
+  *, ::before, ::after { outline-color: var(--color-accent-500); }
+  .dark *, .dark ::before, .dark ::after { outline-color: var(--color-accent-400); }
+}
+
+/* Scrollbar: a slim warm-grey thumb, no track (scrollbar-color for Chrome and Firefox,
+   the -webkit- rules for Safari). */
+:root { scrollbar-color: rgba(112, 108, 100, 0.4) transparent; }
+.dark { scrollbar-color: rgba(169, 164, 155, 0.3) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(112, 108, 100, 0.35); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(112, 108, 100, 0.6); }
+.dark ::-webkit-scrollbar-thumb { background: rgba(169, 164, 155, 0.28); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(169, 164, 155, 0.5); }
+
+/* Switching theme: a short cross-fade of colours. ThemeProvider sets the class on <html>
+   for the length of the fade, only on a click (never on first paint), and not at all
+   under reduced motion. It replaces other transitions for that moment, which is fine. */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-switching,
+  .theme-switching *,
+  .theme-switching ::before,
+  .theme-switching ::after {
+    transition: background-color 0.22s ease-out, border-color 0.22s ease-out, color 0.22s ease-out,
+      fill 0.22s ease-out, stroke 0.22s ease-out, box-shadow 0.22s ease-out,
+      text-decoration-color 0.22s ease-out !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SURFACES (the old class names, now bright: white, or anthracite in dark,
+   with a hairline border and a soft layered shadow; no blur, no glow)
+═══════════════════════════════════════════ */
+/* Cards and bars that sit on the page */
+.glass {
+  background: #FFFFFF;
+  border: 1px solid var(--color-slate-200);
+  box-shadow: var(--depth-card);
+}
+/* Raised: dialogs, menus, the create form */
+.glass-strong {
+  background: #FFFFFF;
+  border: 1px solid var(--color-slate-200);
+  box-shadow: var(--depth-overlay);
+}
+.dark .glass {
+  background: var(--color-slate-900);
+  border-color: var(--color-slate-800);
+}
+/* Still slate-900 (insides keep their slate-800 hovers and fields), set apart by a stronger
+   edge and a deeper shadow. */
+.dark .glass-strong {
+  background: var(--color-slate-900);
+  border-color: var(--color-slate-700);
+}
+
+/* A figure inside a card: a step back down to the paper */
+.stat-card {
+  background: var(--color-slate-50);
+  border: 1px solid var(--color-slate-200);
+}
+.dark .stat-card {
+  background: var(--color-slate-950);
+  border-color: var(--color-slate-800);
+}
+
+/* The old gradient-text classes, now plain: ink for figures and totals, the accent red
+   for a single emphasised word. */
+.gradient-text { color: var(--color-slate-900); }
+.dark .gradient-text { color: var(--color-slate-50); }
+.gradient-text-animated { color: var(--color-accent-700); }
+.dark .gradient-text-animated { color: var(--color-accent-400); }
+
+/* Focus ring for inputs: the border turns into a 2px accent edge with a soft halo, in
+   place of the outline every other control gets (two rings on one field looked doubled). */
+.input-glow { transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out, background-color 0.15s ease-out; }
+.input-glow:focus {
+  outline: none;
+  border-color: var(--color-accent-500);
+  box-shadow: 0 0 0 1px var(--color-accent-500), 0 0 0 4px rgba(214, 69, 61, 0.14);
+}
+.dark .input-glow:focus {
+  border-color: var(--color-accent-400);
+  box-shadow: 0 0 0 1px var(--color-accent-400), 0 0 0 4px rgba(243, 122, 112, 0.2);
+}
+/* An invalid field stays red while focused (this rule is unlayered: utilities can't override
+   the one above). Tailwind's error red, not the accent; the field also shows an icon and text. */
+.input-glow[aria-invalid="true"] { border-color: var(--color-red-500); }
+.input-glow[aria-invalid="true"]:focus {
+  border-color: var(--color-red-600);
+  box-shadow: 0 0 0 1px var(--color-red-600), 0 0 0 4px rgba(239, 68, 68, 0.16);
+}
+.dark .input-glow[aria-invalid="true"] { border-color: var(--color-red-400); }
+.dark .input-glow[aria-invalid="true"]:focus {
+  border-color: var(--color-red-400);
+  box-shadow: 0 0 0 1px var(--color-red-400), 0 0 0 4px rgba(248, 113, 113, 0.22);
+}
+
+/* ═══════════════════════════════════════════
+   BUTTONS (colour, depth and press only: size, padding and radius come from utilities)
+═══════════════════════════════════════════ */
+/* Primary: card-suit red; a step darker on hover, two when pressed, and a slight give. */
+.btn-primary {
+  position: relative;
+  background: var(--color-accent-600);
+  color: #FFFFFF;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 2px rgba(35, 38, 45, 0.14);
+  transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out, opacity 0.15s, scale 0.12s ease-out;
+}
+.btn-primary:hover:not(:disabled) { background: var(--color-accent-700); }
+.btn-primary:active:not(:disabled) { background: var(--color-accent-800); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18); scale: 0.98; }
+.dark .btn-primary { background: var(--color-accent-550); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(0, 0, 0, 0.3); }
+.dark .btn-primary:hover:not(:disabled) { background: var(--color-accent-600); }
+.dark .btn-primary:active:not(:disabled) { background: var(--color-accent-700); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25); }
+/* Disabled is grey, not a faded red (which reads as pink). After the dark rules: same specificity. */
+.btn-primary:disabled { background: var(--color-slate-200); color: var(--color-slate-500); box-shadow: none; cursor: not-allowed; }
+.dark .btn-primary:disabled { background: var(--color-slate-800); color: var(--color-slate-400); box-shadow: none; }
+
+/* Secondary: a white (dark: slate-900) key with a hairline, tinted on hover. In the
+   components layer, unlike the primary: utilities may adjust it (a border colour, a bg). */
+@layer components {
+  .btn-secondary {
+    background: #FFFFFF;
+    color: var(--color-slate-900);
+    border: 1px solid var(--color-slate-300);
+    box-shadow: 0 1px 2px rgba(35, 38, 45, 0.05);
+    transition: background-color 0.15s ease-out, border-color 0.15s ease-out, color 0.15s ease-out, scale 0.12s ease-out;
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--color-slate-50); border-color: var(--color-slate-400); }
+  .btn-secondary:active:not(:disabled) { background: var(--color-slate-100); scale: 0.98; }
+  .dark .btn-secondary {
+    background: var(--color-slate-900);
+    color: var(--color-slate-100);
+    border-color: var(--color-slate-700);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .dark .btn-secondary:hover:not(:disabled) { background: var(--color-slate-800); border-color: #575A62; }
+  .dark .btn-secondary:active:not(:disabled) { background: var(--color-slate-800); }
+  .btn-secondary:disabled { color: var(--color-slate-400); box-shadow: none; cursor: not-allowed; }
+  .dark .btn-secondary:disabled { color: var(--color-slate-500); }
+}
+
+/* Voting card motion. The room owns the card's look (utilities in RoomClient); this is the
+   shared timing: a springy lift and press, quick colour changes. Tailwind 4 moves with the
+   translate/scale/rotate properties, so those are listed alongside transform. */
+.vote-card {
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.35, 0.64, 1),
+    translate 0.22s cubic-bezier(0.34, 1.35, 0.64, 1),
+    scale 0.22s cubic-bezier(0.34, 1.35, 0.64, 1),
+    rotate 0.22s cubic-bezier(0.34, 1.35, 0.64, 1),
+    box-shadow 0.2s ease-out, border-color 0.15s ease-out, background-color 0.15s ease-out, color 0.15s ease-out;
+}
+
+/* The site header: a hairline at rest, and a soft shadow once the page scrolls under it
+   (a scroll-driven animation: no script; browsers without it just keep the hairline). */
+.site-header { box-shadow: 0 0 0 rgba(35, 38, 45, 0); }
+@supports (animation-timeline: scroll()) {
+  .site-header {
+    animation: header-lift linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 48px;
+  }
+}
+@keyframes header-lift {
+  to { box-shadow: 0 1px 2px rgba(35, 38, 45, 0.04), 0 6px 18px rgba(35, 38, 45, 0.07); }
+}
+.dark .site-header { animation-name: header-lift-dark; }
+@keyframes header-lift-dark {
+  to { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.3); }
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS (only what the app uses)
+═══════════════════════════════════════════ */
+@keyframes pop-in {
+  0%   { transform: scale(0.96); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes slide-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes badge-in {
+  from { transform: translateY(-4px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+/* A card turning face up: a quarter turn from edge-on to flat. */
+@keyframes reveal-card {
+  0%   { transform: perspective(500px) rotateY(90deg); opacity: 0.4; }
+  60%  { transform: perspective(500px) rotateY(-8deg); opacity: 1; }
+  100% { transform: perspective(500px) rotateY(0); opacity: 1; }
+}
+@keyframes count-bounce {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes chat-bounce {
+  0%, 100% { transform: scale(1); }
+  30%  { transform: scale(1.25); }
+  60%  { transform: scale(0.92); }
+}
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-7px, 2px); }
+  20%, 40%, 60%, 80% { transform: translate(7px, -2px); }
+}
+
+.animate-shake       { animation: shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.animate-pop-in      { animation: pop-in 0.2s ease-out forwards; }
+.animate-slide-up    { animation: slide-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.animate-badge-in    { animation: badge-in 0.3s ease-out forwards; }
+.animate-reveal      { animation: reveal-card 0.5s ease-out both; }
+.animate-count       { animation: count-bounce 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) forwards; }
+.animate-spin-slow   { animation: spin-slow 1.2s linear infinite; }
+.animate-chat-bounce { animation: chat-bounce 0.4s cubic-bezier(0.34, 1.4, 0.64, 1); }
+
+/* ═══════════════════════════════════════════
+   MOBILE / PWA
+═══════════════════════════════════════════ */
+html {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+/* A floor for tap targets, in the base layer so a utility (min-w-0 in a tight grid)
+   can still lower it. Touch screens get a bigger one. */
+@layer base {
+  button, a, [role="button"] { min-height: 32px; min-width: 32px; }
+  @media (pointer: coarse) {
+    button, a, [role="button"] { min-height: 40px; min-width: 40px; }
+  }
+}
+
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+.pwa-top-controls { top: max(1rem, env(safe-area-inset-top, 1rem)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin-slow, .animate-chat-bounce, .animate-shake {
+    animation: none;
+  }
+  .animate-pop-in, .animate-slide-up, .animate-badge-in, .animate-reveal, .animate-count {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  /* Colour changes stay; movement goes. */
+  .btn-primary:active:not(:disabled), .btn-secondary:active:not(:disabled) { scale: none; }
+  .vote-card { transition: box-shadow 0.15s, border-color 0.15s, background-color 0.15s, color 0.15s; }
+}
+
+/* ═══════════════════════════════════════════
+   TYPOGRAPHY HELPERS
+   Rule of thumb: nothing under 11px anywhere; long-form copy is 16px.
+═══════════════════════════════════════════ */
+/* Small uppercase section label */
+.eyebrow {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-slate-500);
+}
+.dark .eyebrow { color: var(--color-slate-400); }
+/* Spacing Chinese characters apart blurs them: no letter-spacing on its labels and headings. */
+:lang(zh) .eyebrow,
+:lang(zh) :is(h1, h2, h3) { letter-spacing: 0; }
+/* Chinese and Arabic letters need more pixels than Latin ones: 12px at least. */
+:lang(zh) :is(.text-\[10px\], .text-\[11px\]),
+:lang(ar) :is(.text-\[10px\], .text-\[11px\]) { font-size: 0.75rem; }
+
+/* Long-form content (blog posts, guides, legal pages, landing pages). A word or address
+   longer than the line (German compounds at 320px) breaks instead of running out of the
+   column; headings balance their lines, so none ends on a lone word. */
+.prose-article { font-size: 1rem; line-height: 1.75; color: var(--color-slate-700); overflow-wrap: break-word; }
+.dark .prose-article { color: var(--color-slate-300); }
+.prose-article > :first-child { margin-top: 0; }
+.prose-article h2 {
+  font-size: 1.375rem; line-height: 1.3; font-weight: 700;
+  color: var(--color-slate-900); margin: 2.5rem 0 0.75rem; scroll-margin-top: 5rem; text-wrap: balance;
+}
+.prose-article h3 {
+  font-size: 1.125rem; line-height: 1.4; font-weight: 600;
+  color: var(--color-slate-900); margin: 1.75rem 0 0.5rem; scroll-margin-top: 5rem; text-wrap: balance;
+}
+.dark .prose-article h2, .dark .prose-article h3 { color: var(--color-slate-50); }
+.prose-article p { margin: 0 0 1rem; text-wrap: pretty; }
+.prose-article ul, .prose-article ol { margin: 0 0 1.25rem; padding-inline-start: 1.375rem; }
+.prose-article ul { list-style: disc; }
+.prose-article ol { list-style: decimal; }
+.prose-article li { margin: 0.375rem 0; padding-inline-start: 0.125rem; }
+/* Bullets in the accent, numbers in grey */
+.prose-article ul > li::marker { color: var(--color-accent-500); }
+.dark .prose-article ul > li::marker { color: var(--color-accent-400); }
+.prose-article ol > li::marker { color: var(--color-slate-500); font-variant-numeric: tabular-nums; }
+.dark .prose-article ol > li::marker { color: var(--color-slate-400); }
+/* Links: ink over a red underline, red on hover */
+.prose-article a {
+  color: var(--color-slate-900);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-accent-500) 50%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.prose-article a:hover { color: var(--color-accent-700); text-decoration-color: currentColor; }
+.dark .prose-article a { color: var(--color-slate-50); text-decoration-color: color-mix(in srgb, var(--color-accent-400) 60%, transparent); }
+.dark .prose-article a:hover { color: var(--color-accent-400); text-decoration-color: currentColor; }
+.prose-article strong { font-weight: 600; color: var(--color-slate-900); }
+.dark .prose-article strong { color: var(--color-slate-50); }
+/* Rarely used in the content, but styled for when they are: a quote with a red rule,
+   a hairline break, and bare code (the chip in ContentPage.inlineCode is the usual form). */
+.prose-article blockquote {
+  margin: 0 0 1.25rem; padding: 0.125rem 0 0.125rem 1rem;
+  border-inline-start: 2px solid var(--color-accent-500);
+  color: var(--color-slate-600); font-style: normal;
+}
+.dark .prose-article blockquote { border-color: var(--color-accent-400); color: var(--color-slate-300); }
+.prose-article hr { margin: 2rem 0; border: 0; border-top: 1px solid var(--color-slate-200); }
+.dark .prose-article hr { border-top-color: var(--color-slate-800); }
+.prose-article :not(pre) > code:not([class]) {
+  padding: 0.125rem 0.375rem; border-radius: 0.375rem; font-size: 0.875em;
+  background: var(--color-slate-100); border: 1px solid var(--color-slate-200); color: var(--color-slate-900);
+}
+.dark .prose-article :not(pre) > code:not([class]) {
+  background: var(--color-slate-800); border-color: var(--color-slate-700); color: var(--color-slate-100);
+}
+
+/* Alternating full-width band for marketing sections: white across the paper */
+.section-band {
+  background: #FFFFFF;
+  border-top: 1px solid var(--color-slate-200);
+  border-bottom: 1px solid var(--color-slate-200);
+}
+.dark .section-band { background: var(--color-slate-900); border-color: var(--color-slate-800); }

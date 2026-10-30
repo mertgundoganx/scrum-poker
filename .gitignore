@@ -1,0 +1,54 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# Tests
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Env files: only the example is committed
+.env*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Keys and certificates
+*.pem
+*.key
+
+# Deployment
+.vercel
+
+# Editors and local tools
+.vscode/
+.idea/
+*.swp
+*~
+.claude/
+.eslintcache
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,200 @@
+/*
+ * The room's playing cards: the hand, the cards on the seats (face down until the
+ * reveal, then turned over), the result and the final-estimate chips. Global like
+ * globals.css (a stylesheet stays once loaded), so every class is prefixed `pc-`.
+ *
+ * In the components layer, so a utility on the same element (a size, a radius) wins.
+ * The layer order is restated first: whichever stylesheet loads first sets it.
+ * Colours read the palette's variables, with their values as a fallback (Tailwind
+ * emits only the variables something uses).
+ */
+@layer theme, base, components, utilities;
+
+@layer components {
+  /* A card face: white paper, a hairline edge, a soft layered shadow. */
+  .pc {
+    position: relative;
+    background-color: #FFFFFF;
+    color: var(--color-slate-900, #23262D);
+    border: 1px solid var(--color-slate-200, #E8E5DF);
+    box-shadow: 0 1px 2px rgba(35, 38, 45, 0.06), 0 3px 8px -2px rgba(35, 38, 45, 0.08);
+  }
+  /* Dark: a raised anthracite card, its top edge catching the light. */
+  .dark .pc {
+    background-color: var(--color-slate-800, #30333A);
+    color: var(--color-slate-50, #FBFAF7);
+    border-color: var(--color-slate-700, #44464D);
+    border-top-color: #565961;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 10px -3px rgba(0, 0, 0, 0.45);
+  }
+
+  /* The card's corner index (its value and a pip), red like the diamond suit. */
+  .pc-index { color: var(--color-accent-600, #BF3830); }
+  .dark .pc-index { color: var(--color-accent-400, #F0675D); }
+
+  /* A card in the hand: it lifts on a spring when pointed at. */
+  .pc-play {
+    transition:
+      translate 0.24s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.2s ease-out,
+      border-color 0.15s ease-out,
+      background-color 0.15s ease-out,
+      color 0.15s ease-out;
+  }
+  @media (hover: hover) {
+    .pc-play:not(:disabled):hover {
+      translate: 0 -6px;
+      border-color: var(--color-slate-300, #D5D1C9);
+      box-shadow: 0 2px 4px rgba(35, 38, 45, 0.06), 0 12px 22px -8px rgba(35, 38, 45, 0.22);
+    }
+    .dark .pc-play:not(:disabled):hover {
+      border-color: var(--color-slate-600, #5A5750);
+      border-top-color: #6A6D75;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 22px -8px rgba(0, 0, 0, 0.6);
+    }
+  }
+  .pc-play:not(:disabled):active { translate: 0 -3px; }
+
+  /*
+   * The card played: higher, framed in the accent (a 2px edge: the border and a 1px
+   * ring), its top tinted. Never a dark fill.
+   */
+  .pc.pc-on,
+  .pc-play.pc-on:not(:disabled):hover {
+    translate: 0 -14px;
+    border-color: var(--color-accent-500, #D6453D);
+    background-image: linear-gradient(to bottom, var(--color-accent-50, #FEF4F2) 0%, var(--color-accent-50, #FEF4F2) 22%, #FFFFFF 62%);
+    color: var(--color-accent-700, #A02F28);
+    box-shadow: 0 0 0 1px var(--color-accent-500, #D6453D), 0 3px 6px rgba(35, 38, 45, 0.07), 0 16px 26px -10px rgba(35, 38, 45, 0.24);
+  }
+  .dark .pc.pc-on,
+  .dark .pc-play.pc-on:not(:disabled):hover {
+    border-color: var(--color-accent-400, #F0675D);
+    background-image: linear-gradient(to bottom, #4A3134 0%, #4A3134 22%, var(--color-slate-800, #30333A) 62%);
+    color: #FFFFFF;
+    box-shadow: 0 0 0 1px var(--color-accent-400, #F0675D), 0 3px 6px rgba(0, 0, 0, 0.4), 0 16px 26px -10px rgba(0, 0, 0, 0.65);
+  }
+
+  /*
+   * A face that matches the result (or the pick): the same accent frame and tint,
+   * flat on the table (no lift).
+   */
+  .pc.pc-match,
+  .pc-play.pc-match:not(:disabled):hover {
+    border-color: var(--color-accent-500, #D6453D);
+    background-color: var(--color-accent-50, #FEF4F2);
+    color: var(--color-accent-700, #A02F28);
+    box-shadow: 0 0 0 1px var(--color-accent-500, #D6453D), 0 1px 2px rgba(35, 38, 45, 0.06), 0 3px 8px -2px rgba(35, 38, 45, 0.1);
+  }
+  .dark .pc.pc-match,
+  .dark .pc-play.pc-match:not(:disabled):hover {
+    border-color: var(--color-accent-400, #F0675D);
+    background-color: #45302F;
+    color: #FFFFFF;
+    box-shadow: 0 0 0 1px var(--color-accent-400, #F0675D), 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 10px -3px rgba(0, 0, 0, 0.45);
+  }
+
+  /*
+   * A card face down: the red back, a fine white frame inside it and a lattice of
+   * thin diagonal lines (diamonds where they cross), a white pip in the middle.
+   */
+  .pc-back {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-accent-500, #D6453D);
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.17) 0 1px, transparent 1px 5px),
+      repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.17) 0 1px, transparent 1px 5px);
+    border: 1px solid var(--color-accent-600, #BF3830);
+    color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(35, 38, 45, 0.1), 0 3px 8px -2px rgba(35, 38, 45, 0.14);
+  }
+  .pc-back::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 3px;
+    pointer-events: none;
+  }
+  .dark .pc-back {
+    background-color: var(--color-accent-550, #CC3D35);
+    border-color: var(--color-accent-700, #A02F28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 10px -3px rgba(0, 0, 0, 0.45);
+  }
+  /* The middle pip, cut out of the lattice by a ring in the back's own red. */
+  .pc-back-pip { stroke: var(--color-accent-500, #D6453D); }
+  .dark .pc-back-pip { stroke: var(--color-accent-550, #CC3D35); }
+
+  /* A card dealt onto a seat: it drops into place. */
+  .pc-deal { animation: pc-deal 0.22s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+
+  /*
+   * Turning a card over: the back and the face share one grid cell, back to back;
+   * the pair turns half a turn, the face coming up. --flip-delay staggers the seats.
+   */
+  .pc-flip {
+    display: inline-grid;
+    transform-style: preserve-3d;
+    animation: pc-flip 0.38s cubic-bezier(0.3, 1.25, 0.55, 1) both;
+    animation-delay: var(--flip-delay, 0ms);
+  }
+  .pc-flip > * {
+    grid-area: 1 / 1;
+    backface-visibility: hidden;
+  }
+  .pc-flip > .pc-back { transform: rotateY(180deg); }
+
+  /* Something on a turned card (the lowest and highest's arrow): in once it is face up. */
+  .pc-after-flip {
+    animation: pc-hero 0.22s ease-out both;
+    animation-delay: calc(var(--flip-delay, 0ms) + 0.3s);
+  }
+
+  /* The result card: in after the cards are turned. */
+  .pc-hero {
+    animation: pc-hero 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: var(--hero-delay, 0ms);
+  }
+  /* Consensus: a few small pips drift out from the result card, once. */
+  .pc-burst > * {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 10px;
+    margin: -5px 0 0 -4px;
+    color: var(--color-accent-500, #D6453D);
+    opacity: 0;
+    animation: pc-burst 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    animation-delay: calc(var(--hero-delay, 0ms) + 0.12s);
+  }
+  .dark .pc-burst > * { color: var(--color-accent-400, #F0675D); }
+}
+
+@keyframes pc-deal {
+  from { translate: 0 -8px; opacity: 0; }
+  to   { translate: 0 0; opacity: 1; }
+}
+@keyframes pc-flip {
+  from { transform: perspective(600px) rotateY(180deg); }
+  to   { transform: perspective(600px) rotateY(0deg); }
+}
+@keyframes pc-hero {
+  from { scale: 0.82; opacity: 0; }
+  to   { scale: 1; opacity: 1; }
+}
+@keyframes pc-burst {
+  0%   { translate: 0 0; scale: 0.4; opacity: 0; }
+  25%  { opacity: 1; }
+  100% { translate: var(--dx) var(--dy); scale: 1; rotate: var(--rot, 0deg); opacity: 0; }
+}
+
+/* Reduced motion: no lift, no flip, no flourish; the end state at once. */
+@media (prefers-reduced-motion: reduce) {
+  .pc-play { transition: box-shadow 0.15s, border-color 0.15s, background-color 0.15s, color 0.15s; }
+  .pc-deal, .pc-flip, .pc-hero, .pc-after-flip { animation: none; }
+  .pc-burst { display: none; }
+}

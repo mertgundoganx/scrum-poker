@@ -1,0 +1,106 @@
+# Production on one server, deployed with Shipwick. Routine releases deploy
+# the application alone, so Redis is not recreated each time:
+#   shipwick deploy scrum-poker
+# Redis is deployed only when its entry changes: shipwick deploy redis
+#
+# Secrets live on the server (shipwick secret set NAME); ${NAME} is filled in
+# there. Every hostname is behind Cloudflare's proxy: the server takes traffic
+# from Cloudflare only, and the agent obtains certificates through DNS.
+
+apps:
+  # The only data store: live room snapshots and chat (an hour after the last
+  # change) and kept rooms (30 days, then 180 days from each time their owner
+  # comes back; at most 5,000). Rate limits live in the app's memory. Every key but the kept
+  # rooms' index expires; when memory runs out, volatile-ttl drops the ones
+  # closest to expiring first, so kept rooms are the last to go. The append-only file
+  # writes every change to disk within a second; no periodic snapshots
+  # (--save ""), which would fork the process every minute under load: the
+  # backup writes its own.
+  - name: redis
+    # An exact release: deployments are recorded and rolled back by the tag,
+    # and a data store should not change version on a redeploy. Dependabot
+    # doesn't read this file: bump it by hand.
+    image: redis:8.10.3-alpine
+    # The image's redis user: started as it, the entrypoint has nothing to
+    # chown and the container needs no capabilities.
+    user: "999:1000"
+    # Reached by the app as redis:6379 on the private network; not published
+    # on the server.
+    port: 6379
+    # Through sh: Shipwick refuses an empty argument, and `--save ''` needs
+    # one. exec leaves redis-server as the process that gets SIGTERM.
+    command: ["sh", "-c", "exec redis-server --appendonly yes --save '' --maxmemory 192mb --maxmemory-policy volatile-ttl"]
+    volumes:
+      - name: data
+        path: /data
+    health:
+      command: ["redis-cli", "ping"]
+      # Loading a full append-only file after a recreate takes a few seconds.
+      start_period: 30s
+    # Above maxmemory: an AOF rewrite forks the process, and the limit has no
+    # swap.
+    resources:
+      memory: 384mb
+    # Redis writes /data only.
+    security:
+      read_only: true
+      capabilities: none
+      non_root: true
+    backups:
+      schedule: "0 3 * * *"
+      keep: 7
+      # Before the volume is archived: rewrite the append-only file, so it
+      # holds today's data and not every change since the last rewrite
+      # (deleted rooms included), then SAVE writes dump.rdb, a consistent
+      # copy. Both take a second or two at this size.
+      before: ["sh", "-c", "redis-cli BGREWRITEAOF >/dev/null && while redis-cli INFO persistence | grep -qE 'aof_rewrite_(in_progress|scheduled):1'; do sleep 1; done && redis-cli SAVE"]
+      before_timeout: 5m
+    deploy:
+      strategy: recreate
+
+  - name: scrum-poker
+    build: .
+    init: true
+    # The image's USER (nextjs); a number, so non_root below can check it.
+    user: "1001"
+    port: 3000
+    # www is the canonical host: next.config.ts and the metadata name it, and
+    # the proxy sends the bare domain there.
+    domain: www.scrumpokerplay.com
+    redirects: [scrumpokerplay.com]
+    env:
+      REDIS_URL: redis://redis:6379
+      ROOM_TOKEN_SECRET: ${ROOM_TOKEN_SECRET}
+      # Room state lives in memory: the heap is collected well before the
+      # 768mb limit, rather than the container being killed at it.
+      NODE_OPTIONS: "--max-old-space-size=448"
+    # app/api/health: answers 200 once the server takes requests.
+    health:
+      path: /api/health
+    resources:
+      memory: 768mb
+    # The code can't be rewritten: only Next's cache and /tmp are writable,
+    # in memory (counted against the 768mb).
+    security:
+      read_only: true
+      tmpfs:
+        - path: /app/.next/cache
+          size: 32mb
+        - path: /tmp
+          size: 16mb
+      capabilities: none
+      non_root: true
+    # Compressed on the server's disk: more history in the same space.
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "5"
+    deploy:
+      strategy: rolling
+      # Rooms hold open connections (SSE); on SIGTERM the app flushes to Redis
+      # and closes them at once. This is only the upper bound.
+      stop_timeout: 30s
+    # A full deploy recreates Redis first, so the old replica's flush on
+    # SIGTERM reaches it.
+    after: [redis]

@@ -1,0 +1,42 @@
+# Weekly update suggestions, grouped so they arrive as one pull request each.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dependencies:
+        update-types: [minor, patch]
+    ignore:
+      # Majors are upgraded by hand: typescript-eslint doesn't support TypeScript 7 yet,
+      # and @types/node follows the Node version the server runs (24).
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
+      # A new Next major changes APIs (middleware became proxy, params became
+      # async…): upgraded by hand, when chosen, with its guide in
+      # node_modules/next/dist/docs. Its eslint config follows it.
+      - dependency-name: next
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint-config-next
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # The image follows the Node version the server runs (24), like @types/node.
+      - dependency-name: node
+        update-types: [version-update:semver-major]

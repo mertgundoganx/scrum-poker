@@ -1,0 +1,35 @@
+# The build context holds what `pnpm build` needs: the code, public/ and the
+# package files. Patterns starting with **/ match at the root too.
+
+# Dependencies and build output: the image installs and builds its own.
+**/node_modules
+.next
+*.tsbuildinfo
+coverage
+
+# Secrets: none goes into the image; they come from the environment.
+**/.env
+**/.env.*
+*.pem
+*.key
+
+# Tests, docs and repository files the server doesn't need.
+e2e
+test-results
+playwright-report
+blob-report
+docs
+**/*.md
+.git
+.github
+Dockerfile
+.dockerignore
+shipwick.yaml
+
+# Local tools and OS files.
+.vercel
+.vscode
+.idea
+.claude
+**/.DS_Store
+**/*.log
