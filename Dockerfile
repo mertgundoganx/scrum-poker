@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # An exact release and digest: builds repeat, and Dependabot bumps both.
-FROM node:24.22.2-alpine3.24@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS base
+FROM node:24.22.3-alpine3.24@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS base
 
 # pnpm's version comes from "packageManager" in package.json.
 RUN corepack enable
@@ -25,7 +25,7 @@ RUN pnpm build
 
 # --- Runner ---
 # No package manager at runtime: the server needs node alone.
-FROM node:24.22.2-alpine3.24@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS runner
+FROM node:24.22.3-alpine3.24@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
